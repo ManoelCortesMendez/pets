@@ -47,9 +47,8 @@ public class CatalogActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu options from the res/menu/menu_catalog.xml file.
-        // This adds menu items to the app bar.
         getMenuInflater().inflate(R.menu.menu_catalog, menu);
-        return true;
+        return true; // This adds menu items to the app bar.
     }
 
     @Override
