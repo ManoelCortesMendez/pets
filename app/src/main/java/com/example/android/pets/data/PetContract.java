@@ -29,7 +29,7 @@ public final class PetContract {
         public final static String COLUMN_PET_NAME = "name";
         public final static String COLUMN_PET_BREED = "breed";
         public final static String COLUMN_PET_GENDER = "gender";
-        public final static String COLUMN_PET_WEIGHT = "weights";
+        public final static String COLUMN_PET_WEIGHT = "weight";
 
         /**
          * Helper constants for this table
