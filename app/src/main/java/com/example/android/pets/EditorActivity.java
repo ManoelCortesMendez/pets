@@ -15,6 +15,8 @@
  */
 package com.example.android.pets;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -26,9 +28,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 // Import contract: directly import the inner class PetEntry to avoid typing PetContract.PetEntry each time
 import com.example.android.pets.data.PetContract.PetEntry;
+import com.example.android.pets.data.PetDbHelper;
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -120,7 +124,10 @@ public class EditorActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
-                // Do nothing for now
+                // Save pet to the database
+                insertPet();
+                // Exit activity and go up one level -- that is, go back to the pet list
+                finish();
                 return true;
             // Respond to a click on the "Delete" menu option
             case R.id.action_delete:
@@ -133,5 +140,39 @@ public class EditorActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Insert custom pet into the database.
+     */
+    private void insertPet() {
+
+        // To connect to our database, we instantiate our subclass of SQLiteOpenHelper
+        // and pass the context, which is the current activity.
+        PetDbHelper mDbHelper = new PetDbHelper(this);
+
+        // Get database in write mode
+        SQLiteDatabase database = mDbHelper.getWritableDatabase();
+
+        // Get values inputted by user
+        String nameString = mNameEditText.getText().toString().trim();
+        String breedString = mBreedEditText.getText().toString().trim();
+        int weight = Integer.parseInt(mWeightEditText.getText().toString().trim());
+
+        // Create row with custom values
+        ContentValues petContentValues = new ContentValues();
+        petContentValues.put(PetEntry.COLUMN_PET_NAME, nameString);
+        petContentValues.put(PetEntry.COLUMN_PET_BREED, breedString);
+        petContentValues.put(PetEntry.COLUMN_PET_GENDER, mGender);
+        petContentValues.put(PetEntry.COLUMN_PET_WEIGHT, weight);
+
+        // Add row to database
+        long newRowId = database.insert(PetEntry.TABLE_NAME, null, petContentValues);
+
+
+        // Display toast success or failure toast message
+        String toastMessage = (newRowId == -1) ? "Error saving pet" : "Pet saved with id " + newRowId;
+
+        Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show();
     }
 }

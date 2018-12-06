@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.pets.data.PetDbHelper;
 import com.example.android.pets.data.PetContract.PetEntry;
@@ -61,7 +62,7 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
 
-        // To access our database, we instantiate our subclass of SQLiteOpenHelper
+        // To create our database, we instantiate our subclass of SQLiteOpenHelper
         // and pass the context, which is the current activity.
         mDbHelper = new PetDbHelper(this);
 
@@ -92,6 +93,12 @@ public class CatalogActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        displayDatabaseInfo();
+    }
+
     /**
      * Inflate and display menu.
      *
@@ -118,7 +125,7 @@ public class CatalogActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 // Inset dummy pet in database
-                insertPet();
+                insertDummyPet();
                 // Update database info on screen
                 displayDatabaseInfo();
                 return true;
@@ -131,9 +138,9 @@ public class CatalogActivity extends AppCompatActivity {
     }
 
     /**
-     * Insert pet into the database.
+     * Insert a dummy pet, with pre-defined data, into the database.
      */
-    private void insertPet() {
+    private void insertDummyPet() {
 
         // Get database in write mode
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
