@@ -15,12 +15,14 @@
  */
 package com.example.android.pets;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,6 +36,16 @@ import com.example.android.pets.data.PetContract.PetEntry;
  */
 public class CatalogActivity extends AppCompatActivity {
 
+    /**
+     * Database helper object to interact with database.
+     */
+    private PetDbHelper mDbHelper;
+
+    /**
+     * Method called when activity is created to set its content and create the app database.
+     *
+     * @param savedInstanceState Saved previous state, if there is any.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +61,10 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
 
+        // To access our database, we instantiate our subclass of SQLiteOpenHelper
+        // and pass the context, which is the current activity.
+        mDbHelper = new PetDbHelper(this);
+
         // Show information about the database
         displayDatabaseInfo();
     }
@@ -58,10 +74,6 @@ public class CatalogActivity extends AppCompatActivity {
      * the pets database.
      */
     private void displayDatabaseInfo() {
-        // To access our database, we instantiate our subclass of SQLiteOpenHelper
-        // and pass the context, which is the current activity.
-        PetDbHelper mDbHelper = new PetDbHelper(this);
-
         // Create and/or open a database to read from it
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
@@ -80,6 +92,12 @@ public class CatalogActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Inflate and display menu.
+     *
+     * @param menu Reference to the on-screen menu anchor.
+     * @return true to display the menu inflated on screen.
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu options from the res/menu/menu_catalog.xml file.
@@ -87,13 +105,22 @@ public class CatalogActivity extends AppCompatActivity {
         return true; // This adds menu items to the app bar.
     }
 
+    /**
+     * Map behaviour to each menu item.
+     *
+     * @param item Menu item that was clicked.
+     * @return true to confirm that we handled the behaviour in this method.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // User clicked on a menu option in the app bar overflow menu
         switch (item.getItemId()) {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
-                // Do nothing for now
+                // Inset dummy pet in database
+                insertPet();
+                // Update database info on screen
+                displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
@@ -101,5 +128,27 @@ public class CatalogActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Insert pet into the database.
+     */
+    private void insertPet() {
+
+        // Get database in write mode
+        SQLiteDatabase database = mDbHelper.getWritableDatabase();
+
+        // Create row
+        ContentValues petContentValues = new ContentValues();
+        petContentValues.put(PetEntry.COLUMN_PET_NAME, "Toto");
+        petContentValues.put(PetEntry.COLUMN_PET_BREED, "Terrier");
+        petContentValues.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
+        petContentValues.put(PetEntry.COLUMN_PET_WEIGHT, 7);
+
+        // Add row to database
+        long newRowId = database.insert(PetEntry.TABLE_NAME, null, petContentValues);
+
+        // Debug: print log message confirming the creation of a new row in the database
+        Log.e("CatalogActivity", "New row ID: " + newRowId);
     }
 }
