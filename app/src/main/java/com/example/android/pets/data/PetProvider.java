@@ -1,6 +1,7 @@
 package com.example.android.pets.data;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -245,6 +246,17 @@ public class PetProvider extends ContentProvider {
      */
     @Override
     public String getType(Uri uri) {
-        return null;
+
+        // Match URI to determine path to follow
+        final int match = uriMatcher.match(uri);
+
+        switch (match) {
+            case PETS:
+                return PetEntry.CONTENT_LIST_TYPE; // When the URI operates on the entire database
+            case PET_ID:
+                return PetEntry.CONTENT_ITEM_TYPE; // When the URI operates on a single row
+            default:
+                throw new IllegalArgumentException("Unknown URI: " + uri + "with match: " + match);
+        }
     }
 }
