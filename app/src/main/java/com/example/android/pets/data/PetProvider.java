@@ -153,18 +153,72 @@ public class PetProvider extends ContentProvider {
     }
 
     /**
-     * Delete the data at the given selection and selection arguments.
-     */
-    @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
-        return 0;
-    }
-
-    /**
      * Update the data at the given selection and selection arguments, with the new content values.
      */
     @Override
     public int update(Uri uri, ContentValues contentValues, String selection, String[] selectionArgs) {
+
+        // Match URI to determine action to take
+        final int match = uriMatcher.match(uri);
+        switch (match) {
+            case PetProvider.PETS:
+                return updatePet(uri, contentValues, selection, selectionArgs);
+            case PetProvider.PET_ID:
+                selection = PetEntry._ID + "=?";
+                selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
+                return updatePet(uri, contentValues, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Update is not supported for: " + uri);
+        }
+    }
+
+    private int updatePet(Uri uri, ContentValues contentValues, String selection, String[] selectionArgs) {
+
+        // Validate data
+
+        // If content values is empty, return early
+        if (contentValues.size() == 0) {
+            return 0;
+        }
+
+        // Check that the name, if present, is not null
+        if (contentValues.containsKey(PetEntry.COLUMN_PET_NAME)) {
+            String name = contentValues.getAsString(PetEntry.COLUMN_PET_NAME);
+            if (name == null) {
+                throw new IllegalArgumentException("Pet requires a name");
+            }
+        }
+
+        // Check that the gender value is valid
+        if (contentValues.containsKey(PetEntry.COLUMN_PET_GENDER)) {
+            Integer gender = contentValues.getAsInteger(PetEntry.COLUMN_PET_GENDER);
+            if (gender == null || !PetEntry.isValidGender(gender)) {
+                throw new IllegalArgumentException("Pet requires valid gender");
+            }
+        }
+
+        // Check that the weight value is valid
+        if (contentValues.containsKey(PetEntry.COLUMN_PET_WEIGHT)) {
+            Integer weight = contentValues.getAsInteger(PetEntry.COLUMN_PET_WEIGHT);
+            if (weight != null && weight < 0) {
+                throw new IllegalArgumentException("Pet requires valid weight");
+            }
+        }
+
+        // No need to check the breed. Any value is valid.
+
+        // Open writable database
+        SQLiteDatabase petDatabase = petDbHelper.getWritableDatabase();
+
+        // Update database row
+        return petDatabase.update(PetEntry.TABLE_NAME, contentValues, selection, selectionArgs);
+    }
+
+    /**
+     * Delete the data at the given selection and selection arguments.
+     */
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
         return 0;
     }
 
