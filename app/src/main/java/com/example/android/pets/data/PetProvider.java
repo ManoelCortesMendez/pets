@@ -7,6 +7,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.util.Log;
 
 import com.example.android.pets.data.PetContract.PetEntry;
 
@@ -96,7 +97,37 @@ public class PetProvider extends ContentProvider {
      */
     @Override
     public Uri insert(Uri uri, ContentValues contentValues) {
-        return null;
+
+        // Match URI to determine case
+        final int match = uriMatcher.match(uri);
+
+        switch (match) {
+            case PETS:
+                return insertPet(uri, contentValues);
+            default:
+                throw new IllegalArgumentException("Insertion is not supported for " + uri);
+        }
+    }
+
+    /**
+     * Helper method for inserting a pet in the database.
+     */
+    private Uri insertPet(Uri uri, ContentValues contentValues) {
+
+        // Open writable database
+        SQLiteDatabase petDatabase = petDbHelper.getWritableDatabase();
+
+        // Insert a new pet into the pets database table with the given ContentValues
+        long id = petDatabase.insert(PetEntry.TABLE_NAME, null, contentValues);
+
+        // Handle insertion failure -- denoted by an id of -1
+        if (id == -1) {
+            Log.e(LOG_TAG, "Failed to insert row for" + uri);
+            return null;
+        }
+
+        // Return the original URI with the id of the new pet appended
+        return ContentUris.withAppendedId(uri, id);
     }
 
     /**
