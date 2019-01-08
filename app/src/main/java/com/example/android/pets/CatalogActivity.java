@@ -19,6 +19,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -28,19 +29,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-
-import com.example.android.pets.data.PetDbHelper;
 import com.example.android.pets.data.PetContract.PetEntry;
 
 /**
  * Displays list of pets that were entered and stored in the app.
  */
 public class CatalogActivity extends AppCompatActivity {
-
-    /**
-     * Database helper object to interact with database.
-     */
-    private PetDbHelper mDbHelper;
 
     /**
      * Method called when activity is created to set its content and create the app database.
@@ -61,10 +55,6 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-        // To create our database, we instantiate our subclass of SQLiteOpenHelper
-        // and pass the context, which is the current activity.
-        mDbHelper = new PetDbHelper(this);
 
         // Show information about the database
         displayDatabaseInfo();
@@ -189,9 +179,6 @@ public class CatalogActivity extends AppCompatActivity {
      */
     private void insertDummyPet() {
 
-        // Get database in write mode
-        SQLiteDatabase database = mDbHelper.getWritableDatabase();
-
         // Create row
         ContentValues petContentValues = new ContentValues();
         petContentValues.put(PetEntry.COLUMN_PET_NAME, "Toto");
@@ -199,10 +186,7 @@ public class CatalogActivity extends AppCompatActivity {
         petContentValues.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
         petContentValues.put(PetEntry.COLUMN_PET_WEIGHT, 7);
 
-        // Add row to database
-        long newRowId = database.insert(PetEntry.TABLE_NAME, null, petContentValues);
-
-        // Debug: print log message confirming the creation of a new row in the database
-        Log.e("CatalogActivity", "New row ID: " + newRowId);
+        // Insert row
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, petContentValues);
     }
 }

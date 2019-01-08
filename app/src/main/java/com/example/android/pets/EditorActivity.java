@@ -17,6 +17,7 @@ package com.example.android.pets;
 
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -147,13 +148,6 @@ public class EditorActivity extends AppCompatActivity {
      */
     private void insertPet() {
 
-        // To connect to our database, we instantiate our subclass of SQLiteOpenHelper
-        // and pass the context, which is the current activity.
-        PetDbHelper mDbHelper = new PetDbHelper(this);
-
-        // Get database in write mode
-        SQLiteDatabase database = mDbHelper.getWritableDatabase();
-
         // Get values inputted by user
         String nameString = mNameEditText.getText().toString().trim();
         String breedString = mBreedEditText.getText().toString().trim();
@@ -166,13 +160,14 @@ public class EditorActivity extends AppCompatActivity {
         petContentValues.put(PetEntry.COLUMN_PET_GENDER, mGender);
         petContentValues.put(PetEntry.COLUMN_PET_WEIGHT, weight);
 
-        // Add row to database
-        long newRowId = database.insert(PetEntry.TABLE_NAME, null, petContentValues);
+        // Insert pet
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, petContentValues);
 
-
-        // Display toast success or failure toast message
-        String toastMessage = (newRowId == -1) ? "Error saving pet" : "Pet saved with id " + newRowId;
-
-        Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show();
+        // Handle insertion error/success
+        if (newUri == null) {
+            Toast.makeText(this, "Error saving pet", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Pet saved", Toast.LENGTH_SHORT).show();
+        }
     }
 }
