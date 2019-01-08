@@ -27,7 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
+
 
 import com.example.android.pets.data.PetDbHelper;
 import com.example.android.pets.data.PetContract.PetEntry;
@@ -75,8 +75,6 @@ public class CatalogActivity extends AppCompatActivity {
      * the pets database.
      */
     private void displayDatabaseInfo() {
-        // Create and/or open a database to read from it
-        SQLiteDatabase database = mDbHelper.getReadableDatabase();
 
         // Define projection -- that is a string array with the names of the columns we're interested in
         String[] projection = {
@@ -87,15 +85,13 @@ public class CatalogActivity extends AppCompatActivity {
                 PetEntry.COLUMN_PET_WEIGHT
         };
 
-        // Get data from database as a cursor
-        Cursor cursor = database.query(
-                PetEntry.TABLE_NAME,
-                projection,
-                null,
-                null,
-                null,
-                null,
-                null);
+        // Query for full database using the content resolver
+        Cursor cursor = getContentResolver().query(
+                PetEntry.CONTENT_URI,   // The content URI of the pets table
+                projection,             // the columns to return for each row
+                null,          // Selection criteria
+                null,       // Selection criteria
+                null);         // The sort order for the returned rows
 
         try {
             // Get main text view
