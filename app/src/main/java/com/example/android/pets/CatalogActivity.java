@@ -54,8 +54,12 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
 
-        // Show information about the database
-        displayDatabaseInfo();
+        // Get list view to populate with pet data
+        ListView petListView = findViewById(R.id.pet_list_view);
+
+        // Bind empty view to pet list view -- so that it shows only when the list has 0 pets.
+        View emptyView = findViewById(R.id.empty_view);
+        petListView.setEmptyView(emptyView);
     }
 
     /**
