@@ -38,6 +38,8 @@ import android.widget.Toast;
 // Import contract: directly import the inner class PetEntry to avoid typing PetContract.PetEntry each time
 import com.example.android.pets.data.PetContract.PetEntry;
 
+import org.w3c.dom.Text;
+
 /**
  * Allows user to create a new pet or edit an existing one.
  */
@@ -180,13 +182,26 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         // Get values inputted by user
         String nameString = mNameEditText.getText().toString().trim();
         String breedString = mBreedEditText.getText().toString().trim();
-        int weight = Integer.parseInt(mWeightEditText.getText().toString().trim());
+        String weightString = mWeightEditText.getText().toString().trim();
+
+        // If all fields are empty, don't save an empty pet -- return early
+        if (currentPetUri == null &&
+                TextUtils.isEmpty(nameString) && TextUtils.isEmpty(breedString) &&
+                TextUtils.isEmpty(weightString) && mGender == PetEntry.GENDER_UNKNOWN) { return; }
 
         // Create row with custom values
         ContentValues petContentValues = new ContentValues();
         petContentValues.put(PetEntry.COLUMN_PET_NAME, nameString);
         petContentValues.put(PetEntry.COLUMN_PET_BREED, breedString);
         petContentValues.put(PetEntry.COLUMN_PET_GENDER, mGender);
+
+        // If weight field is empty, set weight to 0 instead
+        int weight = 0;
+
+        if (!TextUtils.isEmpty(weightString)) {
+            weight = Integer.parseInt(weightString);
+        }
+
         petContentValues.put(PetEntry.COLUMN_PET_WEIGHT, weight);
 
         // Determine if this is a new pet we're inserting, or an existing pet we're updating
