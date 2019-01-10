@@ -155,7 +155,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
                 // Save pet to the database
-                insertPet();
+                savePet();
                 // Exit activity and go up one level -- that is, go back to the pet list
                 finish();
                 return true;
@@ -173,9 +173,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     }
 
     /**
-     * Insert custom pet into the database.
+     * Save new pet into the database or update an existing one.
      */
-    private void insertPet() {
+    private void savePet() {
 
         // Get values inputted by user
         String nameString = mNameEditText.getText().toString().trim();
@@ -189,14 +189,34 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         petContentValues.put(PetEntry.COLUMN_PET_GENDER, mGender);
         petContentValues.put(PetEntry.COLUMN_PET_WEIGHT, weight);
 
-        // Insert pet
-        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, petContentValues);
+        // Determine if this is a new pet we're inserting, or an existing pet we're updating
+        // by checking if currentPetUri is null (inserting) or not (updating)
+        if (currentPetUri == null) {
 
-        // Handle insertion error/success
-        if (newUri == null) {
-            Toast.makeText(this, "Error saving pet", Toast.LENGTH_SHORT).show();
+            // This is a new pet, so insert a new pet into the provider,
+            // returning the content URI for the new pet
+            Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, petContentValues);
+
+            // Handle insertion error/success
+            if (newUri == null) {
+                Toast.makeText(this, "Error saving pet", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Pet saved", Toast.LENGTH_SHORT).show();
+            }
         } else {
-            Toast.makeText(this, "Pet saved", Toast.LENGTH_SHORT).show();
+            // Otherwise, we're updating and EXISTING pet. So update the pet with content URI: currentPetUri
+            // and pass in the new content values. Pass in null for the selection and selection args
+            // because currentPetUri will already identify the correct row in the database that we want to modify
+            int rowsAffected = getContentResolver().update(currentPetUri, petContentValues, null, null);
+
+            // Show a toast message depending on whether or not the update was successful
+            if (rowsAffected == 0) {
+                // If no rows were affected, then there was an error with the update
+                Toast.makeText(this, "Error updating pet", Toast.LENGTH_SHORT).show();
+            } else {
+                // Otherwise, the update was successful
+                Toast.makeText(this, "Pet updated", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
