@@ -90,6 +90,13 @@ public class PetProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("Cannot query unknown URI: " + uri);
         }
+
+        // Set notification URI on cursor so we know what content URI the cursor was created for.
+        // If data at this URI changes, then we know we need to update the cursor.
+        // In short, bind cursor to specific data URI, and make it listen for changes in that data.
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
+        // Return cursor
         return cursor;
     }
 
@@ -141,16 +148,20 @@ public class PetProvider extends ContentProvider {
         SQLiteDatabase petDatabase = petDbHelper.getWritableDatabase();
 
         // Insert a new pet into the pets database table with the given ContentValues
-        long id = petDatabase.insert(PetEntry.TABLE_NAME, null, contentValues);
+        long newRowId = petDatabase.insert(PetEntry.TABLE_NAME, null, contentValues);
 
         // Handle insertion failure -- denoted by an id of -1
-        if (id == -1) {
+        if (newRowId == -1) {
             Log.e(LOG_TAG, "Failed to insert row for" + uri);
             return null;
         }
 
+        // Notify all listeners that the data has changed at the pet content URI
+        // uri: content://com.example.android.pets/pets
+        getContext().getContentResolver().notifyChange(uri, null);
+
         // Return the original URI with the id of the new pet appended
-        return ContentUris.withAppendedId(uri, id);
+        return ContentUris.withAppendedId(uri, newRowId);
     }
 
     /**
@@ -211,8 +222,16 @@ public class PetProvider extends ContentProvider {
         // Open writable database
         SQLiteDatabase petDatabase = petDbHelper.getWritableDatabase();
 
-        // Update database row
-        return petDatabase.update(PetEntry.TABLE_NAME, contentValues, selection, selectionArgs);
+        // Update database and get the number of rows updated
+        int nbRowsUpdated = petDatabase.update(PetEntry.TABLE_NAME, contentValues, selection, selectionArgs);
+
+        // If 1 or more rows were updated, notify all listeners that the data at given URI has changed
+        if (nbRowsUpdated != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        // Return number of rows updated
+        return nbRowsUpdated;
     }
 
     /**
@@ -224,21 +243,35 @@ public class PetProvider extends ContentProvider {
         // Open writable database
         SQLiteDatabase petDatabase = petDbHelper.getWritableDatabase();
 
+        // Track the number of rows that were deleted
+        int nbRowsDeleted;
+
         // Match URI to determine case
         final int match = uriMatcher.match(uri);
 
         switch (match) {
             case PETS:
-                // Delete all rows in the database
-                return petDatabase.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                // Delete all rows in the database that match the selection and selection args
+                // and store the number of rows deleted
+                nbRowsDeleted = petDatabase.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             case PET_ID:
-                // Delete single row in database with given ID
+                // Delete single row in database with given ID and store the number of rows deleted
                 selection = PetEntry._ID + "=?";
                 selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
-                return petDatabase.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                nbRowsDeleted = petDatabase.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new IllegalArgumentException("Deletion is not supported for: " + uri);
         }
+
+        // If 1 or more rows were deleted, notify all listeners that data at given URI changed
+        if (nbRowsDeleted != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        // Return number of rows deleted
+        return nbRowsDeleted;
     }
 
     /**
