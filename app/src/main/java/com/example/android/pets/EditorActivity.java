@@ -16,6 +16,7 @@
 package com.example.android.pets;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
@@ -62,6 +63,21 @@ public class EditorActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_editor);
+
+        // Check URI data passed with the intent to determine if:
+        //  - We're creating a new pet
+        //  - We're updating an existing pet
+        Intent intent = getIntent();
+        Uri currentPetUri = intent.getData();
+
+        // If the intent does not contain a pet content URI...
+        if (currentPetUri == null) {
+            // ... we need to create a new pet. So change the activity title to reflect that.
+            setTitle("Add Pet");
+        } else {
+            // Else, we need to edit an existing pet. So change activity title to reflect that.
+            setTitle("Edit Pet");
+        }
 
         // Find all relevant views that we will need to read user input from
         mNameEditText = (EditText) findViewById(R.id.edit_pet_name);
