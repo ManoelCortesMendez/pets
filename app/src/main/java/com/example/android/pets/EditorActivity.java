@@ -17,10 +17,13 @@ package com.example.android.pets;
 
 import android.content.ContentValues;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.Menu;
@@ -34,12 +37,11 @@ import android.widget.Toast;
 
 // Import contract: directly import the inner class PetEntry to avoid typing PetContract.PetEntry each time
 import com.example.android.pets.data.PetContract.PetEntry;
-import com.example.android.pets.data.PetDbHelper;
 
 /**
  * Allows user to create a new pet or edit an existing one.
  */
-public class EditorActivity extends AppCompatActivity {
+public class EditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     /** EditText field to enter the pet's name */
     private EditText mNameEditText;
@@ -59,6 +61,13 @@ public class EditorActivity extends AppCompatActivity {
      */
     private int mGender = 0;
 
+    /** Identifier for the pet data loader */
+    private static final int EXISTING_PET_LOADER = 0;
+
+    /** Content URI for the existing pet (null if it's a new pet) */
+    private Uri currentPetUri;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,7 +77,7 @@ public class EditorActivity extends AppCompatActivity {
         //  - We're creating a new pet
         //  - We're updating an existing pet
         Intent intent = getIntent();
-        Uri currentPetUri = intent.getData();
+        currentPetUri = intent.getData();
 
         // If the intent does not contain a pet content URI...
         if (currentPetUri == null) {
@@ -77,6 +86,10 @@ public class EditorActivity extends AppCompatActivity {
         } else {
             // Else, we need to edit an existing pet. So change activity title to reflect that.
             setTitle("Edit Pet");
+
+            // Initialize a loader to read the pet data from the database and display the current
+            // values in the editor
+            getSupportLoaderManager().initLoader(EXISTING_PET_LOADER, null, this);
         }
 
         // Find all relevant views that we will need to read user input from
@@ -185,5 +198,83 @@ public class EditorActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Pet saved", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
+
+        // Since the editor shows all pet attributes, define a projection that contains all columns
+        // from the pet table
+        String[] projection = {
+                PetEntry._ID,
+                PetEntry.COLUMN_PET_NAME,
+                PetEntry.COLUMN_PET_BREED,
+                PetEntry.COLUMN_PET_GENDER,
+                PetEntry.COLUMN_PET_WEIGHT
+        };
+
+        // This loader will execute the content provider's query method on a background thread
+        return new CursorLoader(
+                this,        // Parent activity context
+                currentPetUri,       // Query the content URI for the current pet
+                projection,         // Columns to include in the resulting cursor
+                null,       // No selection clause
+                null,   // No selection arguments
+                null);     // Default sort order
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> petLoader, Cursor petCursor) {
+
+        // Bail early if the cursor is null or there is less than 1 row in the cursor
+        if (petCursor == null || petCursor.getCount() < 1) {
+            return;
+        }
+
+        // Proceed with moving to the first row of the cursor and reading data from it
+        // This should be the only row in the cursor
+        if (petCursor.moveToFirst()) {
+
+            // Find the columns of pet attributes that we're interested in
+            int nameColumnIndex = petCursor.getColumnIndex(PetEntry.COLUMN_PET_NAME);
+            int breedColumnIndex = petCursor.getColumnIndex(PetEntry.COLUMN_PET_BREED);
+            int genderColumnIndex = petCursor.getColumnIndex(PetEntry.COLUMN_PET_GENDER);
+            int weightColumnIndex = petCursor.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT);
+
+            // Extract out the value from the cursor for the given column index
+            String name = petCursor.getString(nameColumnIndex);
+            String breed = petCursor.getString(breedColumnIndex);
+            int gender = petCursor.getInt(genderColumnIndex);
+            int weight = petCursor.getInt(weightColumnIndex);
+
+            // Update the view on the screen with the values from the database
+            mNameEditText.setText(name);
+            mBreedEditText.setText(breed);
+            mWeightEditText.setText(Integer.toString(weight));
+
+            // Gender is a dropdown spinner, so map the constant value from the database into one of
+            // the dropdown options (0 is unknown, 1 is male, 2 is female).
+            // Then call seSelection() so that option is displayed on screen aas the current selection.
+            switch (gender) {
+                case PetEntry.GENDER_MALE:
+                    mGenderSpinner.setSelection(1);
+                    break;
+                case PetEntry.GENDER_FEMALE:
+                    mGenderSpinner.setSelection(2);
+                    break;
+                default:
+                    mGenderSpinner.setSelection(0);
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> petLoader) {
+        // If loader is invalidated, clear out all the data from the input fields
+        mNameEditText.setText("");
+        mBreedEditText.setText("");
+        mWeightEditText.setText("");
+        mGenderSpinner.setSelection(0);
     }
 }
