@@ -212,7 +212,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
             // Respond to a click on the "Delete" menu option
             case R.id.action_delete:
-                // Do nothing for now
+                // Pop up confirmation dialog for deletion
+                showDeleteConfirmationDialog();
                 return true;
 
             // Respond to a click on the "Up" arrow button in the app bar
@@ -260,6 +261,57 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         // Create and show the alert dialog
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+    }
+
+    private void showDeleteConfirmationDialog() {
+        // Create an AlertDialog.Builder and set the message, and click listeners
+        // for the positive and negative buttons on the dialog.
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Delete this pet?");
+        builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked the "Delete" button, so delete the pet.
+                deletePet();
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked the "Cancel" button, so dismiss the dialog
+                // and continue editing the pet.
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+            }
+        });
+
+        // Create and show the AlertDialog
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    /**
+     * Perform the deletion of the pet in the database.
+     */
+    private void deletePet() {
+        // Only perform deletion if this is an existing pet, not a new pet.
+        if (currentPetUri != null) {
+            // Call the content resolver to delete the pet at the given content URI.
+            // Pass in null for the selection and selection args because the current pet URI already
+            // identifies the pet we want.
+            int nbRowsDeleted = getContentResolver().delete(currentPetUri, null, null);
+            
+            // Show toast message depending on whether or not the delete was successful.
+            if (nbRowsDeleted == 0) {
+                // If no rows were deleted, then there was an error with the delete.
+                Toast.makeText(this, "Error with deleting pet", Toast.LENGTH_SHORT).show();
+            } else {
+                // Otherwise, the delete was successful.
+                Toast.makeText(this, "Pet deleted", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        // Close the activity
+        finish();
     }
 
     /**
