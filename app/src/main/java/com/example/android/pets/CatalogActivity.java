@@ -27,6 +27,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -176,7 +177,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
-                // Do nothing for now
+                deleteAllPets();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -196,5 +197,17 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
 
         // Insert row
         Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, petContentValues);
+    }
+
+    /**
+     * Helper method to delete all pets in the database.
+     */
+    private  void deleteAllPets() {
+
+        // Delete all pets
+        int nbRowsDeleted = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
+
+        // Log deletion confirmation message with number of rows deleted
+        Log.v("CatalogActivity", "Number of rows deleted in database: " + nbRowsDeleted);
     }
 }
