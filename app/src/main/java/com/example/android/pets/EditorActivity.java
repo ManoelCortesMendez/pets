@@ -104,6 +104,13 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         if (currentPetUri == null) {
             // ... we need to create a new pet. So change the activity title to reflect that.
             setTitle("Add Pet");
+
+            // ... and we need to remove the 'delete' item from the options menu, since we're
+            // adding a new pet, and therefore deleting a pet that we have yet to add makes no sense.
+            // Since 'delete' is the only item in our menu, we can remove the entire menu.
+            // The following command makes the menu 'editable' -- the hiding itself is dealt with in
+            // onPrepareOptionsMenu
+            invalidateOptionsMenu();
         } else {
             // Else, we need to edit an existing pet. So change activity title to reflect that.
             setTitle("Edit Pet");
@@ -175,6 +182,19 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         // This adds menu items to the app bar.
         getMenuInflater().inflate(R.menu.menu_editor, menu);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+
+        // If this is a new pet, hide the 'Delete' menu item.
+        if (currentPetUri == null) {
+            MenuItem menuItem = menu.findItem(R.id.action_delete);
+            menuItem.setVisible(false);
+        }
+
+        return true; // To display the menu
     }
 
     @Override
