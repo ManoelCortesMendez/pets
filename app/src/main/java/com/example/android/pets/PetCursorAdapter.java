@@ -2,6 +2,7 @@ package com.example.android.pets;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +41,16 @@ public class PetCursorAdapter extends CursorAdapter {
         return LayoutInflater.from(context).inflate(R.layout.list_item, parent, false);
     }
 
+    /**
+     * This method binds the pet data (in the current row pointed to by cursor) to the given
+     * list item layout. For example, the name for the current pet can be set on the name TextView
+     * in the list item layout.
+     *
+     * @param petItemView    Existing view, returned earlier by newView() method
+     * @param context app context
+     * @param petCursor  The cursor from which to get the data. The cursor is already moved to the
+     *                correct row.
+     */
     @Override
     public void bindView(View petItemView, Context context, Cursor petCursor) {
 
@@ -55,9 +66,14 @@ public class PetCursorAdapter extends CursorAdapter {
         String petName = petCursor.getString(nameColumnIndex);
         String petBreed = petCursor.getString(breedColumnIndex);
 
+        // If the pet breed is an empty string or null, then use some default text that says
+        // 'Unknown breed', so the text view isn't blank.
+        if (TextUtils.isEmpty(petBreed)) {
+            petBreed = "Unknown breed";
+        }
+
         // Update the text views with the pet data
         petNameTextView.setText(petName);
         petBreedTextView.setText(petBreed);
     }
-
 }
